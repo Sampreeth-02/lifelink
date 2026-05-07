@@ -135,11 +135,25 @@ function initDashboard() {
         document.getElementById('active-requests-section').classList.add('hidden');
         document.getElementById('nearby-label').innerText = 'Bank Dashboard';
         document.getElementById('sidebar-desc').innerText = 'Manage your urgent blood requests here.';
+        
+        document.querySelector('.map-container').classList.add('hidden');
+        document.querySelector('.sidebar').style.width = '100%';
+        document.querySelector('.sidebar').style.maxWidth = '600px';
+        document.querySelector('.sidebar').style.margin = '0 auto';
+        document.querySelector('.sidebar').style.borderRight = 'none';
+        
+        loadBankInventory();
     } else {
         document.getElementById('bank-actions').classList.add('hidden');
         document.getElementById('active-requests-section').classList.remove('hidden');
         document.getElementById('nearby-label').innerText = 'Search Blood';
         document.getElementById('sidebar-desc').innerText = 'Search for available blood and urgent requests.';
+        
+        document.querySelector('.map-container').classList.remove('hidden');
+        document.querySelector('.sidebar').style.width = '300px';
+        document.querySelector('.sidebar').style.maxWidth = 'none';
+        document.querySelector('.sidebar').style.margin = '0';
+        document.querySelector('.sidebar').style.borderRight = '1px solid var(--dark-border)';
     }
 
     if (!map) {
@@ -312,6 +326,9 @@ async function submitBloodAction(type) {
 
         if (res.ok) {
             alert(`Successfully declared ${bg} as ${isReq ? 'urgently needed' : 'available'}!`);
+            if (currentRole === 'BLOOD_BANK') {
+                loadBankInventory();
+            }
         } else {
             alert('Failed to process request');
         }
@@ -320,6 +337,44 @@ async function submitBloodAction(type) {
     } finally {
         btn.disabled = false;
         btn.innerText = originalText;
+    }
+}
+
+async function loadBankInventory() {
+    try {
+        const [reqRes, availRes] = await Promise.all([
+            fetch('/api/requests?type=REQUEST'),
+            fetch('/api/requests?type=AVAILABLE')
+        ]);
+        
+        let requests = await reqRes.json();
+        let available = await availRes.json();
+        
+        requests = requests.filter(r => r.bankName === currentUser.username);
+        available = available.filter(r => r.bankName === currentUser.username);
+        
+        const listDiv = document.getElementById('bank-inventory-list');
+        if(!listDiv) return;
+        listDiv.innerHTML = '';
+        
+        requests.forEach(req => {
+            listDiv.innerHTML += `
+                <div style="background: rgba(255,75,75,0.2); border: 1px solid var(--primary-red); padding: 10px; border-radius: 5px;">
+                    <strong style="color:var(--primary-red);">Urgent Need: ${req.bloodGroup}</strong>
+                </div>
+            `;
+        });
+        
+        available.forEach(avail => {
+            listDiv.innerHTML += `
+                <div style="background: rgba(74,144,226,0.2); border: 1px solid #4a90e2; padding: 10px; border-radius: 5px;">
+                    <strong style="color:#4a90e2;">Available: ${avail.bloodGroup}</strong>
+                </div>
+            `;
+        });
+        
+    } catch (err) {
+        console.error("Failed to load bank inventory", err);
     }
 }
 
