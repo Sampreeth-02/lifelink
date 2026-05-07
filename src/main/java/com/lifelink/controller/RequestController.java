@@ -15,12 +15,15 @@ public class RequestController {
     private BloodRequestRepository bloodRequestRepository;
 
     @GetMapping
-    public List<BloodRequest> getActiveRequests() {
-        return bloodRequestRepository.findAllByOrderByCreatedAtDesc();
+    public List<BloodRequest> getRequests(@RequestParam(defaultValue = "REQUEST") String type) {
+        return bloodRequestRepository.findByTypeOrderByCreatedAtDesc(type);
     }
 
     @PostMapping
     public BloodRequest createRequest(@RequestBody BloodRequest request) {
+        if (request.getType() == null) {
+            request.setType("REQUEST");
+        }
         return bloodRequestRepository.save(request);
     }
 }

@@ -109,7 +109,7 @@
                 </div>
 
                 <div id="bank-actions" class="hidden mt-20">
-                    <h3 style="margin-bottom: 10px; color: var(--primary-red);">Raise Request</h3>
+                    <h3 style="margin-bottom: 10px; color: var(--primary-red);">Raise Urgent Request</h3>
                     <select id="request-blood-group" style="width: 100%; padding: 8px; margin-bottom: 10px; background: rgba(0,0,0,0.2); color: white; border: 1px solid var(--dark-border); border-radius: 5px;">
                         <option value="A+">A+</option>
                         <option value="A-">A-</option>
@@ -120,12 +120,28 @@
                         <option value="AB+">AB+</option>
                         <option value="AB-">AB-</option>
                     </select>
-                    <button class="btn primary-btn full-width" onclick="raiseBloodRequest()" id="raise-req-btn">Raise Request</button>
+                    <button class="btn primary-btn full-width" onclick="submitBloodAction('REQUEST')" id="raise-req-btn" style="margin-bottom: 15px;">Raise Request</button>
+
+                    <h3 style="margin-bottom: 10px; color: #4a90e2;">Add Available Blood</h3>
+                    <select id="available-blood-group" style="width: 100%; padding: 8px; margin-bottom: 10px; background: rgba(0,0,0,0.2); color: white; border: 1px solid var(--dark-border); border-radius: 5px;">
+                        <option value="A+">A+</option>
+                        <option value="A-">A-</option>
+                        <option value="B+">B+</option>
+                        <option value="B-">B-</option>
+                        <option value="O+">O+</option>
+                        <option value="O-">O-</option>
+                        <option value="AB+">AB+</option>
+                        <option value="AB-">AB-</option>
+                    </select>
+                    <button class="btn secondary-btn full-width" onclick="submitBloodAction('AVAILABLE')" id="add-avail-btn">Declare Available</button>
                 </div>
 
                 <div id="active-requests-section" class="hidden mt-20">
                     <h3 style="margin-bottom: 10px; color: var(--primary-red);">Urgent Requests</h3>
-                    <div id="requests-list" style="max-height: 200px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px;"></div>
+                    <div id="requests-list" style="max-height: 150px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;"></div>
+                    
+                    <h3 style="margin-bottom: 10px; color: #4a90e2;">Available at Banks</h3>
+                    <div id="available-list" style="max-height: 150px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px;"></div>
                 </div>
 
                 <button class="btn secondary-btn full-width mt-20" onclick="loadMapData()">Refresh Map</button>

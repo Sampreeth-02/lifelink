@@ -219,39 +219,52 @@ async function loadDonors() {
 
 async function loadRequests() {
     try {
-        const res = await fetch('/api/requests');
-        const requests = await res.json();
+        const [reqRes, availRes] = await Promise.all([
+            fetch('/api/requests?type=REQUEST'),
+            fetch('/api/requests?type=AVAILABLE')
+        ]);
+        const requests = await reqRes.json();
+        const available = await availRes.json();
         
-        const listDiv = document.getElementById('requests-list');
-        listDiv.innerHTML = '';
+        const reqDiv = document.getElementById('requests-list');
+        const availDiv = document.getElementById('available-list');
+        reqDiv.innerHTML = '';
+        availDiv.innerHTML = '';
 
-        const hospitalIcon = L.divIcon({
+        const hospitalRedIcon = L.divIcon({
             html: '<div style="font-size: 24px; color: white; background: #ff4b4b; border-radius: 5px; padding: 2px; text-align:center; border:1px solid white;">🏥</div>',
-            className: '',
-            iconSize: [30, 30],
-            iconAnchor: [15, 15]
+            className: '', iconSize: [30, 30], iconAnchor: [15, 15]
+        });
+        
+        const hospitalBlueIcon = L.divIcon({
+            html: '<div style="font-size: 24px; color: white; background: #4a90e2; border-radius: 5px; padding: 2px; text-align:center; border:1px solid white;">🏥</div>',
+            className: '', iconSize: [30, 30], iconAnchor: [15, 15]
         });
 
         requests.forEach(req => {
-            // Add to sidebar
-            listDiv.innerHTML += `
+            reqDiv.innerHTML += `
                 <div style="background: rgba(255,75,75,0.2); border: 1px solid var(--primary-red); padding: 10px; border-radius: 5px;">
                     <strong style="color:var(--primary-red);">${req.bloodGroup} Needed</strong><br>
                     <small>by ${req.bankName}</small>
                 </div>
             `;
-
-            // Add to map
             if (req.latitude && req.longitude) {
-                const marker = L.marker([req.latitude, req.longitude], {icon: hospitalIcon}).addTo(map);
-                const popupContent = `
-                    <div style="text-align: center;">
-                        <h3>Urgent: <span style="font-size: 1.2rem; font-weight: bold; color:var(--primary-red);">${req.bloodGroup}</span></h3>
-                        <p>Requested by: ${req.bankName}</p>
-                        <button onclick="alert('Navigating to Blood Bank...')">Respond to Request</button>
-                    </div>
-                `;
-                marker.bindPopup(popupContent);
+                const marker = L.marker([req.latitude, req.longitude], {icon: hospitalRedIcon}).addTo(map);
+                marker.bindPopup(`<div style="text-align: center;"><h3>Urgent: <span style="font-size: 1.2rem; font-weight: bold; color:var(--primary-red);">${req.bloodGroup}</span></h3><p>Requested by: ${req.bankName}</p><button onclick="alert('Navigating to Blood Bank...')">Donate</button></div>`);
+                markers.push(marker);
+            }
+        });
+
+        available.forEach(avail => {
+            availDiv.innerHTML += `
+                <div style="background: rgba(74,144,226,0.2); border: 1px solid #4a90e2; padding: 10px; border-radius: 5px;">
+                    <strong style="color:#4a90e2;">${avail.bloodGroup} Available</strong><br>
+                    <small>at ${avail.bankName}</small>
+                </div>
+            `;
+            if (avail.latitude && avail.longitude) {
+                const marker = L.marker([avail.latitude, avail.longitude], {icon: hospitalBlueIcon}).addTo(map);
+                marker.bindPopup(`<div style="text-align: center;"><h3>Available: <span style="font-size: 1.2rem; font-weight: bold; color:#4a90e2;">${avail.bloodGroup}</span></h3><p>Bank: ${avail.bankName}</p><button onclick="alert('Navigating to Blood Bank...')">Get Blood</button></div>`);
                 markers.push(marker);
             }
         });
@@ -260,15 +273,18 @@ async function loadRequests() {
     }
 }
 
-async function raiseBloodRequest() {
+async function submitBloodAction(type) {
     if (!userLocation) {
-        alert("Waiting for location. Please allow location access to raise a request.");
+        alert("Waiting for location. Please allow location access first.");
         return;
     }
-    const bg = document.getElementById('request-blood-group').value;
-    const btn = document.getElementById('raise-req-btn');
+    
+    const isReq = type === 'REQUEST';
+    const bg = document.getElementById(isReq ? 'request-blood-group' : 'available-blood-group').value;
+    const btn = document.getElementById(isReq ? 'raise-req-btn' : 'add-avail-btn');
+    const originalText = btn.innerText;
     btn.disabled = true;
-    btn.innerText = 'Raising...';
+    btn.innerText = 'Processing...';
 
     try {
         const res = await fetch('/api/requests', {
@@ -278,23 +294,21 @@ async function raiseBloodRequest() {
                 bloodGroup: bg,
                 bankName: currentUser.username,
                 latitude: userLocation.lat,
-                longitude: userLocation.lng
+                longitude: userLocation.lng,
+                type: type
             })
         });
 
         if (res.ok) {
-            alert(`Successfully raised request for ${bg}`);
-            btn.innerText = 'Raise Request';
-            btn.disabled = false;
+            alert(`Successfully declared ${bg} as ${isReq ? 'urgently needed' : 'available'}!`);
         } else {
-            alert('Failed to raise request');
-            btn.disabled = false;
-            btn.innerText = 'Raise Request';
+            alert('Failed to process request');
         }
     } catch (err) {
         alert('Server error.');
+    } finally {
         btn.disabled = false;
-        btn.innerText = 'Raise Request';
+        btn.innerText = originalText;
     }
 }
 
