@@ -147,6 +147,7 @@ function initDashboard() {
     } else {
         document.getElementById('bank-actions').classList.add('hidden');
         document.getElementById('active-requests-section').classList.remove('hidden');
+        document.getElementById('available-section').classList.add('hidden');
         document.getElementById('nearby-label').innerText = 'Search Blood';
         document.getElementById('sidebar-desc').innerText = 'Search for available blood and urgent requests.';
         
@@ -289,6 +290,7 @@ function filterMap() {
     // Show map and hide placeholder
     document.getElementById('map-placeholder').classList.add('hidden');
     document.getElementById('user-map-container').classList.remove('hidden');
+    document.getElementById('available-section').classList.remove('hidden');
     
     if (map) {
         setTimeout(() => map.invalidateSize(), 100);

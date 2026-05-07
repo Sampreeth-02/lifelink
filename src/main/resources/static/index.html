@@ -159,8 +159,10 @@
                     <h3 style="margin-bottom: 10px; color: var(--primary-red);">Urgent Requests</h3>
                     <div id="requests-list" style="max-height: 150px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;"></div>
                     
-                    <h3 style="margin-bottom: 10px; color: #4a90e2;">Available at Banks</h3>
-                    <div id="available-list" style="max-height: 150px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px;"></div>
+                    <div id="available-section" class="hidden">
+                        <h3 style="margin-bottom: 10px; color: #4a90e2;">Available at Banks</h3>
+                        <div id="available-list" style="max-height: 150px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px;"></div>
+                    </div>
                 </div>
 
                 <button class="btn secondary-btn full-width mt-20" onclick="loadMapData()">Refresh Data</button>
