@@ -16,18 +16,20 @@ public class BloodRequest {
     private Double latitude;
     private Double longitude;
     private String type; // 'REQUEST' or 'AVAILABLE'
+    private Integer units;
     private LocalDateTime createdAt;
 
     public BloodRequest() {
         this.createdAt = LocalDateTime.now();
     }
 
-    public BloodRequest(String bloodGroup, String bankName, Double latitude, Double longitude, String type) {
+    public BloodRequest(String bloodGroup, String bankName, Double latitude, Double longitude, String type, Integer units) {
         this.bloodGroup = bloodGroup;
         this.bankName = bankName;
         this.latitude = latitude;
         this.longitude = longitude;
         this.type = type;
+        this.units = units != null ? units : 1;
         this.createdAt = LocalDateTime.now();
     }
 
@@ -48,6 +50,9 @@ public class BloodRequest {
 
     public String getType() { return type; }
     public void setType(String type) { this.type = type; }
+
+    public Integer getUnits() { return units; }
+    public void setUnits(Integer units) { this.units = units; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
