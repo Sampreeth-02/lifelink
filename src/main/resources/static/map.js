@@ -223,7 +223,7 @@ async function loadMapData() {
         requests.forEach(req => {
             if (reqDiv) {
                 reqDiv.innerHTML += `
-                    <div style="background: rgba(255,75,75,0.2); border: 1px solid var(--primary-red); padding: 10px; border-radius: 5px;">
+                    <div onclick="focusMapOn(${req.latitude || 0}, ${req.longitude || 0})" style="background: rgba(255,75,75,0.2); border: 1px solid var(--primary-red); padding: 10px; border-radius: 5px; cursor: pointer; transition: 0.2s;" onmouseover="this.style.background='rgba(255,75,75,0.4)'" onmouseout="this.style.background='rgba(255,75,75,0.2)'">
                         <strong style="color:var(--primary-red);">${req.bloodGroup} Needed (${req.units || 1} units)</strong><br>
                         <small>by ${req.bankName}</small>
                     </div>
@@ -239,7 +239,7 @@ async function loadMapData() {
         available.forEach(avail => {
             if (availDiv) {
                 availDiv.innerHTML += `
-                    <div style="background: rgba(74,144,226,0.2); border: 1px solid #4a90e2; padding: 10px; border-radius: 5px;">
+                    <div onclick="focusMapOn(${avail.latitude || 0}, ${avail.longitude || 0})" style="background: rgba(74,144,226,0.2); border: 1px solid #4a90e2; padding: 10px; border-radius: 5px; cursor: pointer; transition: 0.2s;" onmouseover="this.style.background='rgba(74,144,226,0.4)'" onmouseout="this.style.background='rgba(74,144,226,0.2)'">
                         <strong style="color:#4a90e2;">${avail.bloodGroup} Available (${avail.units || 1} units)</strong><br>
                         <small>at ${avail.bankName}</small>
                     </div>
@@ -293,6 +293,25 @@ function filterMap() {
     }
     
     loadMapData();
+}
+
+function focusMapOn(lat, lng) {
+    if (currentRole !== 'DONOR') return; // Only users have the map
+    
+    // Hide placeholder and show map container if not already visible
+    document.getElementById('map-placeholder').classList.add('hidden');
+    document.getElementById('user-map-container').classList.remove('hidden');
+    
+    if (map) {
+        setTimeout(() => {
+            map.invalidateSize();
+            if (lat !== 0 && lng !== 0) {
+                map.setView([lat, lng], 15);
+            } else {
+                alert("Location not provided for this bank.");
+            }
+        }, 100);
+    }
 }
 
 function addRequestToList() {

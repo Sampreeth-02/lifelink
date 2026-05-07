@@ -6,4 +6,5 @@ import java.util.List;
 
 public interface ProfileRepository extends JpaRepository<Profile, Long> {
     List<Profile> findByStatus(String status);
+    java.util.Optional<Profile> findByUserId(Long userId);
 }
