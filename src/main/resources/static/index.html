@@ -137,6 +137,22 @@
                 </div>
 
                 <div id="active-requests-section" class="hidden mt-20">
+                    <h3 style="margin-bottom: 10px; color: white;">Search Blood Group</h3>
+                    <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                        <select id="search-blood-group" style="flex: 1; padding: 8px; background: rgba(0,0,0,0.2); color: white; border: 1px solid var(--dark-border); border-radius: 5px;">
+                            <option value="ALL">All Groups</option>
+                            <option value="A+">A+</option>
+                            <option value="A-">A-</option>
+                            <option value="B+">B+</option>
+                            <option value="B-">B-</option>
+                            <option value="O+">O+</option>
+                            <option value="O-">O-</option>
+                            <option value="AB+">AB+</option>
+                            <option value="AB-">AB-</option>
+                        </select>
+                        <button class="btn primary-btn" onclick="filterMap()" style="padding: 8px 15px;">Search</button>
+                    </div>
+
                     <h3 style="margin-bottom: 10px; color: var(--primary-red);">Urgent Requests</h3>
                     <div id="requests-list" style="max-height: 150px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;"></div>
                     

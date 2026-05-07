@@ -217,14 +217,28 @@ async function loadDonors() {
     }
 }
 
+let currentFilter = 'ALL';
+
+function filterMap() {
+    currentFilter = document.getElementById('search-blood-group').value;
+    loadMapData();
+}
+
 async function loadRequests() {
     try {
         const [reqRes, availRes] = await Promise.all([
             fetch('/api/requests?type=REQUEST'),
             fetch('/api/requests?type=AVAILABLE')
         ]);
-        const requests = await reqRes.json();
-        const available = await availRes.json();
+        
+        // Apply search filter if selected
+        let requests = await reqRes.json();
+        let available = await availRes.json();
+        
+        if (currentFilter !== 'ALL') {
+            requests = requests.filter(r => r.bloodGroup === currentFilter);
+            available = available.filter(r => r.bloodGroup === currentFilter);
+        }
         
         const reqDiv = document.getElementById('requests-list');
         const availDiv = document.getElementById('available-list');
