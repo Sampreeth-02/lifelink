@@ -133,12 +133,13 @@ function initDashboard() {
     if (currentRole === 'BLOOD_BANK') {
         document.getElementById('bank-actions').classList.remove('hidden');
         document.getElementById('active-requests-section').classList.add('hidden');
-        document.getElementById('nearby-label').innerText = 'Donors';
-        document.getElementById('stat-label-text').innerText = 'Available Donors';
-        document.getElementById('sidebar-desc').innerText = 'Real-time availability of blood donors in your vicinity.';
+        document.getElementById('donor-stats').classList.add('hidden');
+        document.getElementById('nearby-label').innerText = 'Dashboard';
+        document.getElementById('sidebar-desc').innerText = 'Manage your urgent blood requests here.';
     } else {
         document.getElementById('bank-actions').classList.add('hidden');
         document.getElementById('active-requests-section').classList.remove('hidden');
+        document.getElementById('donor-stats').classList.remove('hidden');
         document.getElementById('nearby-label').innerText = 'Donors & Requests';
         document.getElementById('stat-label-text').innerText = 'Available Donors';
         document.getElementById('sidebar-desc').innerText = 'Available blood groups nearby and urgent requests.';
@@ -175,8 +176,8 @@ async function loadMapData() {
     markers.forEach(m => map.removeLayer(m));
     markers = [];
 
-    await loadDonors();
     if (currentRole === 'DONOR') {
+        await loadDonors();
         await loadRequests();
     }
 }
