@@ -1,6 +1,8 @@
 // State
 let currentUser = null;
 let currentRole = null;
+let map = null;
+let markers = [];
 let userLocation = null;
 let stagedRequests = [];
 
@@ -135,12 +137,41 @@ function initDashboard() {
         document.getElementById('nearby-label').innerText = 'Bank Dashboard';
         document.getElementById('sidebar-desc').innerText = 'Manage your urgent blood requests here.';
         
+        document.getElementById('user-map-container').classList.add('hidden');
+        document.getElementById('bank-panel').classList.remove('hidden');
+        
         loadBankInventory();
     } else {
         document.getElementById('bank-actions').classList.add('hidden');
         document.getElementById('active-requests-section').classList.remove('hidden');
         document.getElementById('nearby-label').innerText = 'Search Blood';
         document.getElementById('sidebar-desc').innerText = 'Search for available blood and urgent requests.';
+        
+        document.getElementById('user-map-container').classList.remove('hidden');
+        document.getElementById('bank-panel').classList.add('hidden');
+        
+        if (!map) {
+            map = L.map('map').setView([12.9716, 77.5946], 12);
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; OpenStreetMap &copy; CARTO',
+                subdomains: 'abcd',
+                maxZoom: 20
+            }).addTo(map);
+
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition((pos) => {
+                    userLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+                    map.setView([userLocation.lat, userLocation.lng], 13);
+                    
+                    const userIcon = L.divIcon({
+                        html: '<div style="background:#4a90e2; width:15px; height:15px; border-radius:50%; border:2px solid white; box-shadow: 0 0 10px rgba(74,144,226,0.8);"></div>',
+                        className: '',
+                        iconSize: [15, 15]
+                    });
+                    L.marker([userLocation.lat, userLocation.lng], {icon: userIcon}).addTo(map).bindPopup('You are here');
+                });
+            }
+        }
     }
 
     loadMapData();
@@ -148,6 +179,11 @@ function initDashboard() {
 
 async function loadMapData() {
     try {
+        if (map) {
+            markers.forEach(m => map.removeLayer(m));
+            markers = [];
+        }
+
         const [reqRes, availRes] = await Promise.all([
             fetch('/api/requests?type=REQUEST'),
             fetch('/api/requests?type=AVAILABLE')
@@ -167,6 +203,19 @@ async function loadMapData() {
         if (reqDiv) reqDiv.innerHTML = '';
         if (availDiv) availDiv.innerHTML = '';
 
+        let hospitalRedIcon = null;
+        let hospitalBlueIcon = null;
+        if (map) {
+            hospitalRedIcon = L.divIcon({
+                html: '<div style="font-size: 24px; color: white; background: #ff4b4b; border-radius: 5px; padding: 2px; text-align:center; border:1px solid white;">🏥</div>',
+                className: '', iconSize: [30, 30], iconAnchor: [15, 15]
+            });
+            hospitalBlueIcon = L.divIcon({
+                html: '<div style="font-size: 24px; color: white; background: #4a90e2; border-radius: 5px; padding: 2px; text-align:center; border:1px solid white;">🏥</div>',
+                className: '', iconSize: [30, 30], iconAnchor: [15, 15]
+            });
+        }
+
         requests.forEach(req => {
             if (reqDiv) {
                 reqDiv.innerHTML += `
@@ -175,6 +224,11 @@ async function loadMapData() {
                         <small>by ${req.bankName}</small>
                     </div>
                 `;
+            }
+            if (map && req.latitude && req.longitude) {
+                const marker = L.marker([req.latitude, req.longitude], {icon: hospitalRedIcon}).addTo(map);
+                marker.bindPopup(`<div style="text-align: center;"><h3>Urgent: <span style="font-size: 1.2rem; font-weight: bold; color:var(--primary-red);">${req.bloodGroup}</span></h3><p>Requested by: ${req.bankName}</p><button onclick="alert('Navigating to Blood Bank...')">Donate</button></div>`);
+                markers.push(marker);
             }
         });
 
@@ -187,9 +241,14 @@ async function loadMapData() {
                     </div>
                 `;
             }
+            if (map && avail.latitude && avail.longitude) {
+                const marker = L.marker([avail.latitude, avail.longitude], {icon: hospitalBlueIcon}).addTo(map);
+                marker.bindPopup(`<div style="text-align: center;"><h3>Available: <span style="font-size: 1.2rem; font-weight: bold; color:#4a90e2;">${avail.bloodGroup}</span></h3><p>Bank: ${avail.bankName}</p><button onclick="alert('Navigating to Blood Bank...')">Get Blood</button></div>`);
+                markers.push(marker);
+            }
         });
 
-        // Populate Table
+        // Populate Table for Bank View
         const tableBody = document.getElementById('inventory-table-body');
         if (tableBody) {
             tableBody.innerHTML = '';
@@ -402,5 +461,8 @@ function showView(viewName) {
     } else if (viewName === 'dashboard') {
         dashboardView.classList.remove('hidden');
         dashboardView.classList.add('active');
+        if (map) {
+            setTimeout(() => map.invalidateSize(), 100);
+        }
     }
 }
