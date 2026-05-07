@@ -233,7 +233,13 @@ async function loadMapData() {
             }
             if (map && req.latitude && req.longitude) {
                 const marker = L.marker([req.latitude, req.longitude], {icon: hospitalRedIcon}).addTo(map);
-                marker.bindPopup(`<div style="text-align: center;"><h3>Urgent: <span style="font-size: 1.2rem; font-weight: bold; color:var(--primary-red);">${req.bloodGroup}</span></h3><p>Requested by: ${req.bankName}</p><button onclick="alert('Navigating to Blood Bank...')">Donate</button></div>`);
+                marker.bindPopup(`
+                    <div style="text-align: center;">
+                        <h3 style="margin-bottom: 5px; color: var(--primary-red);">${req.bankName}</h3>
+                        <p style="margin-bottom: 5px; font-weight: bold; color: var(--primary-red);">NEEDS: ${req.bloodGroup} (${req.units || 1} units)</p>
+                        <button onclick="navigateTo(${req.latitude}, ${req.longitude})" class="btn primary-btn full-width" style="padding: 5px 10px; font-size: 0.8rem;">Navigate</button>
+                    </div>
+                `);
                 markers.push(marker);
             }
         });
@@ -250,7 +256,13 @@ async function loadMapData() {
             }
             if (map && avail.latitude && avail.longitude) {
                 const marker = L.marker([avail.latitude, avail.longitude], {icon: hospitalBlueIcon}).addTo(map);
-                marker.bindPopup(`<div style="text-align: center;"><h3>Available: <span style="font-size: 1.2rem; font-weight: bold; color:#4a90e2;">${avail.bloodGroup}</span></h3><p>Bank: ${avail.bankName}</p><button onclick="alert('Navigating to Blood Bank...')">Get Blood</button></div>`);
+                marker.bindPopup(`
+                    <div style="text-align: center;">
+                        <h3 style="margin-bottom: 5px; color: #4a90e2;">${avail.bankName}</h3>
+                        <p style="margin-bottom: 5px; font-weight: bold; color: #4a90e2;">HAS: ${avail.bloodGroup} (${avail.units || 1} units)</p>
+                        <button onclick="navigateTo(${avail.latitude}, ${avail.longitude})" class="btn primary-btn full-width" style="padding: 5px 10px; font-size: 0.8rem; background: #4a90e2; border-color: #4a90e2;">Navigate</button>
+                    </div>
+                `);
                 markers.push(marker);
             }
         });
