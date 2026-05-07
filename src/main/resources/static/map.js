@@ -128,39 +128,57 @@ async function handleProfileSetup(e) {
 
 function initDashboard() {
     showView('dashboard');
-    document.getElementById('user-role-badge').innerText = currentRole.replace('_', ' ');
+    document.getElementById('user-role-badge').innerText = currentRole === 'DONOR' ? 'User' : 'Blood Bank';
+
+    if (currentRole === 'BLOOD_BANK') {
+        document.getElementById('bank-actions').classList.remove('hidden');
+        document.getElementById('active-requests-section').classList.add('hidden');
+        document.getElementById('nearby-label').innerText = 'Donors';
+        document.getElementById('stat-label-text').innerText = 'Available Donors';
+        document.getElementById('sidebar-desc').innerText = 'Real-time availability of blood donors in your vicinity.';
+    } else {
+        document.getElementById('bank-actions').classList.add('hidden');
+        document.getElementById('active-requests-section').classList.remove('hidden');
+        document.getElementById('nearby-label').innerText = 'Donors & Requests';
+        document.getElementById('stat-label-text').innerText = 'Available Donors';
+        document.getElementById('sidebar-desc').innerText = 'Available blood groups nearby and urgent requests.';
+    }
 
     if (!map) {
-        // Initialize Leaflet Map
-        // Default center to Bengaluru
         map = L.map('map').setView([12.9716, 77.5946], 12);
-        
-        // CartoDB Dark Matter tile layer for dark theme aesthetic
         L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+            attribution: '&copy; OpenStreetMap &copy; CARTO',
             subdomains: 'abcd',
             maxZoom: 20
         }).addTo(map);
 
-        // Center map to user location if available
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition((pos) => {
-                const lat = pos.coords.latitude;
-                const lng = pos.coords.longitude;
-                map.setView([lat, lng], 13);
+                userLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+                map.setView([userLocation.lat, userLocation.lng], 13);
                 
-                // Add a blue marker for current user
                 const userIcon = L.divIcon({
                     html: '<div style="background:#4a90e2; width:15px; height:15px; border-radius:50%; border:2px solid white; box-shadow: 0 0 10px rgba(74,144,226,0.8);"></div>',
                     className: '',
                     iconSize: [15, 15]
                 });
-                L.marker([lat, lng], {icon: userIcon}).addTo(map).bindPopup('You are here');
+                L.marker([userLocation.lat, userLocation.lng], {icon: userIcon}).addTo(map).bindPopup('You are here');
             });
         }
     }
 
-    loadDonors();
+    loadMapData();
+}
+
+async function loadMapData() {
+    // Clear existing markers
+    markers.forEach(m => map.removeLayer(m));
+    markers = [];
+
+    await loadDonors();
+    if (currentRole === 'DONOR') {
+        await loadRequests();
+    }
 }
 
 async function loadDonors() {
@@ -168,13 +186,8 @@ async function loadDonors() {
         const res = await fetch('/api/donors');
         const donors = await res.json();
         
-        // Clear existing markers
-        markers.forEach(m => map.removeLayer(m));
-        markers = [];
-
         document.getElementById('total-donors').innerText = donors.length;
 
-        // Custom red heart marker icon
         const heartIcon = L.divIcon({
             html: '<div style="font-size: 24px; color: #ff4b4b; filter: drop-shadow(0 0 5px rgba(255,75,75,0.6));">❤️</div>',
             className: '',
@@ -200,6 +213,87 @@ async function loadDonors() {
         });
     } catch (err) {
         console.error("Failed to load donors", err);
+    }
+}
+
+async function loadRequests() {
+    try {
+        const res = await fetch('/api/requests');
+        const requests = await res.json();
+        
+        const listDiv = document.getElementById('requests-list');
+        listDiv.innerHTML = '';
+
+        const hospitalIcon = L.divIcon({
+            html: '<div style="font-size: 24px; color: white; background: #ff4b4b; border-radius: 5px; padding: 2px; text-align:center; border:1px solid white;">🏥</div>',
+            className: '',
+            iconSize: [30, 30],
+            iconAnchor: [15, 15]
+        });
+
+        requests.forEach(req => {
+            // Add to sidebar
+            listDiv.innerHTML += `
+                <div style="background: rgba(255,75,75,0.2); border: 1px solid var(--primary-red); padding: 10px; border-radius: 5px;">
+                    <strong style="color:var(--primary-red);">${req.bloodGroup} Needed</strong><br>
+                    <small>by ${req.bankName}</small>
+                </div>
+            `;
+
+            // Add to map
+            if (req.latitude && req.longitude) {
+                const marker = L.marker([req.latitude, req.longitude], {icon: hospitalIcon}).addTo(map);
+                const popupContent = `
+                    <div style="text-align: center;">
+                        <h3>Urgent: <span style="font-size: 1.2rem; font-weight: bold; color:var(--primary-red);">${req.bloodGroup}</span></h3>
+                        <p>Requested by: ${req.bankName}</p>
+                        <button onclick="alert('Navigating to Blood Bank...')">Respond to Request</button>
+                    </div>
+                `;
+                marker.bindPopup(popupContent);
+                markers.push(marker);
+            }
+        });
+    } catch (err) {
+        console.error("Failed to load requests", err);
+    }
+}
+
+async function raiseBloodRequest() {
+    if (!userLocation) {
+        alert("Waiting for location. Please allow location access to raise a request.");
+        return;
+    }
+    const bg = document.getElementById('request-blood-group').value;
+    const btn = document.getElementById('raise-req-btn');
+    btn.disabled = true;
+    btn.innerText = 'Raising...';
+
+    try {
+        const res = await fetch('/api/requests', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                bloodGroup: bg,
+                bankName: currentUser.username,
+                latitude: userLocation.lat,
+                longitude: userLocation.lng
+            })
+        });
+
+        if (res.ok) {
+            alert(`Successfully raised request for ${bg}`);
+            btn.innerText = 'Raise Request';
+            btn.disabled = false;
+        } else {
+            alert('Failed to raise request');
+            btn.disabled = false;
+            btn.innerText = 'Raise Request';
+        }
+    } catch (err) {
+        alert('Server error.');
+        btn.disabled = false;
+        btn.innerText = 'Raise Request';
     }
 }
 
