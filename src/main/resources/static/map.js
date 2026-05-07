@@ -223,9 +223,10 @@ async function loadMapData() {
         requests.forEach(req => {
             if (reqDiv) {
                 reqDiv.innerHTML += `
-                    <div onclick="focusMapOn(${req.latitude || 0}, ${req.longitude || 0})" style="background: rgba(255,75,75,0.2); border: 1px solid var(--primary-red); padding: 10px; border-radius: 5px; cursor: pointer; transition: 0.2s;" onmouseover="this.style.background='rgba(255,75,75,0.4)'" onmouseout="this.style.background='rgba(255,75,75,0.2)'">
+                    <div onclick="focusMapOn(${req.latitude || 0}, ${req.longitude || 0})" style="background: rgba(255,75,75,0.2); border: 1px solid var(--primary-red); padding: 10px; border-radius: 5px; cursor: pointer; transition: 0.2s; position: relative;" onmouseover="this.style.background='rgba(255,75,75,0.4)'" onmouseout="this.style.background='rgba(255,75,75,0.2)'">
                         <strong style="color:var(--primary-red);">${req.bloodGroup} Needed (${req.units || 1} units)</strong><br>
                         <small>by ${req.bankName}</small>
+                        <button onclick="event.stopPropagation(); navigateTo(${req.latitude || 0}, ${req.longitude || 0})" class="btn primary-btn" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); padding: 5px 10px; font-size: 0.8rem; margin: 0;">Navigate</button>
                     </div>
                 `;
             }
@@ -239,9 +240,10 @@ async function loadMapData() {
         available.forEach(avail => {
             if (availDiv) {
                 availDiv.innerHTML += `
-                    <div onclick="focusMapOn(${avail.latitude || 0}, ${avail.longitude || 0})" style="background: rgba(74,144,226,0.2); border: 1px solid #4a90e2; padding: 10px; border-radius: 5px; cursor: pointer; transition: 0.2s;" onmouseover="this.style.background='rgba(74,144,226,0.4)'" onmouseout="this.style.background='rgba(74,144,226,0.2)'">
+                    <div onclick="focusMapOn(${avail.latitude || 0}, ${avail.longitude || 0})" style="background: rgba(74,144,226,0.2); border: 1px solid #4a90e2; padding: 10px; border-radius: 5px; cursor: pointer; transition: 0.2s; position: relative;" onmouseover="this.style.background='rgba(74,144,226,0.4)'" onmouseout="this.style.background='rgba(74,144,226,0.2)'">
                         <strong style="color:#4a90e2;">${avail.bloodGroup} Available (${avail.units || 1} units)</strong><br>
                         <small>at ${avail.bankName}</small>
+                        <button onclick="event.stopPropagation(); navigateTo(${avail.latitude || 0}, ${avail.longitude || 0})" class="btn secondary-btn" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); padding: 5px 10px; font-size: 0.8rem; margin: 0;">Navigate</button>
                     </div>
                 `;
             }
@@ -311,6 +313,32 @@ function focusMapOn(lat, lng) {
                 alert("Location not provided for this bank.");
             }
         }, 100);
+    }
+}
+
+function navigateTo(destLat, destLng) {
+    if (!destLat || !destLng || (destLat === 0 && destLng === 0)) {
+        alert("Location not provided for this bank.");
+        return;
+    }
+
+    if (navigator.geolocation) {
+        // We can check if we already have userLocation to speed this up
+        if (userLocation && userLocation.lat) {
+            const url = `https://www.google.com/maps/dir/?api=1&origin=${userLocation.lat},${userLocation.lng}&destination=${destLat},${destLng}`;
+            window.open(url, '_blank');
+        } else {
+            navigator.geolocation.getCurrentPosition((pos) => {
+                const url = `https://www.google.com/maps/dir/?api=1&origin=${pos.coords.latitude},${pos.coords.longitude}&destination=${destLat},${destLng}`;
+                window.open(url, '_blank');
+            }, () => {
+                alert("Could not get your current location. Opening map to destination instead.");
+                window.open(`https://www.google.com/maps/search/?api=1&query=${destLat},${destLng}`, '_blank');
+            });
+        }
+    } else {
+        alert("Geolocation is not supported by your browser. Opening map to destination instead.");
+        window.open(`https://www.google.com/maps/search/?api=1&query=${destLat},${destLng}`, '_blank');
     }
 }
 
