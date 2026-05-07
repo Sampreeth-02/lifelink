@@ -394,8 +394,8 @@ async function submitMultiRequest() {
 
 async function submitBloodAction(type) {
     const isReq = type === 'REQUEST';
-    const bg = document.getElementById(isReq ? 'request-blood-group' : 'available-blood-group').value;
-    const btn = document.getElementById(isReq ? 'raise-req-btn' : 'add-avail-btn');
+    const bg = document.getElementById('request-blood-group').value;
+    const btn = document.getElementById('raise-req-btn');
     const originalText = btn.innerText;
     btn.disabled = true;
     btn.innerText = 'Processing...';
@@ -414,12 +414,48 @@ async function submitBloodAction(type) {
         });
 
         if (res.ok) {
-            alert(`Successfully declared ${bg} as ${isReq ? 'urgently needed' : 'available'}!`);
+            alert(`Successfully declared ${bg} as urgently needed!`);
             if (currentRole === 'BLOOD_BANK') {
                 loadBankInventory();
             }
         } else {
             alert('Failed to process request');
+        }
+    } catch (err) {
+        alert('Server error.');
+    } finally {
+        btn.disabled = false;
+        btn.innerText = originalText;
+    }
+}
+
+async function updateInventory(action) {
+    const bg = document.getElementById('update-inv-bg').value;
+    const units = parseInt(document.getElementById('update-inv-units').value);
+    
+    if (isNaN(units) || units < 1) {
+        alert("Please enter a valid number of units.");
+        return;
+    }
+    
+    const btn = action === 'add' ? document.getElementById('add-inv-btn') : document.getElementById('remove-inv-btn');
+    const originalText = btn.innerText;
+    btn.disabled = true;
+    btn.innerText = 'Updating...';
+
+    try {
+        const res = await fetch(`/api/requests/inventory/update?bankName=${encodeURIComponent(currentUser.username)}&bloodGroup=${encodeURIComponent(bg)}&units=${units}&action=${action}`, {
+            method: 'POST'
+        });
+
+        if (res.ok) {
+            alert(`Successfully updated inventory for ${bg}.`);
+            if (currentRole === 'BLOOD_BANK') {
+                loadBankInventory();
+                loadMapData();
+            }
+        } else {
+            alert('Failed to update inventory');
         }
     } catch (err) {
         alert('Server error.');

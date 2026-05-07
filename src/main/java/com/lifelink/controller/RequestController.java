@@ -45,4 +45,50 @@ public class RequestController {
         
         return bloodRequestRepository.save(request);
     }
+
+    @PostMapping("/inventory/update")
+    public org.springframework.http.ResponseEntity<?> updateInventory(
+            @RequestParam String bankName, 
+            @RequestParam String bloodGroup, 
+            @RequestParam int units, 
+            @RequestParam String action) {
+            
+        List<BloodRequest> existing = bloodRequestRepository.findByBankNameAndBloodGroupAndType(bankName, bloodGroup, "AVAILABLE");
+        BloodRequest req;
+        if (existing != null && !existing.isEmpty()) {
+            req = existing.get(0);
+        } else {
+            req = new BloodRequest();
+            req.setBankName(bankName);
+            req.setBloodGroup(bloodGroup);
+            req.setType("AVAILABLE");
+            req.setUnits(0);
+        }
+        
+        if ("remove".equalsIgnoreCase(action)) {
+            req.setUnits(Math.max(0, (req.getUnits() == null ? 0 : req.getUnits()) - units));
+        } else {
+            req.setUnits((req.getUnits() == null ? 0 : req.getUnits()) + units);
+        }
+        
+        if (req.getUnits() == 0) {
+            if (req.getId() != null) {
+                bloodRequestRepository.delete(req);
+            }
+            return org.springframework.http.ResponseEntity.ok().build();
+        }
+        
+        if (req.getBankName() != null && (req.getLatitude() == null || req.getLatitude() == 0.0)) {
+            com.lifelink.model.User bankUser = userRepository.findByUsername(req.getBankName()).orElse(null);
+            if (bankUser != null) {
+                com.lifelink.model.Profile profile = profileRepository.findByUserId(bankUser.getId()).orElse(null);
+                if (profile != null && profile.getLatitude() != null) {
+                    req.setLatitude(profile.getLatitude());
+                    req.setLongitude(profile.getLongitude());
+                }
+            }
+        }
+        
+        return org.springframework.http.ResponseEntity.ok(bloodRequestRepository.save(req));
+    }
 }

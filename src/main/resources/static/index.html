@@ -116,18 +116,24 @@
                     </select>
                     <button class="btn primary-btn full-width" onclick="submitBloodAction('REQUEST')" id="raise-req-btn" style="margin-bottom: 15px;">Raise Request</button>
 
-                    <h3 style="margin-bottom: 10px; color: #4a90e2;">Add Available Blood</h3>
-                    <select id="available-blood-group" style="width: 100%; padding: 8px; margin-bottom: 10px; background: rgba(0,0,0,0.2); color: white; border: 1px solid var(--dark-border); border-radius: 5px;">
-                        <option value="A+">A+</option>
-                        <option value="A-">A-</option>
-                        <option value="B+">B+</option>
-                        <option value="B-">B-</option>
-                        <option value="O+">O+</option>
-                        <option value="O-">O-</option>
-                        <option value="AB+">AB+</option>
-                        <option value="AB-">AB-</option>
-                    </select>
-                    <button class="btn secondary-btn full-width" onclick="submitBloodAction('AVAILABLE')" id="add-avail-btn">Declare Available</button>
+                    <h3 class="mt-20 mb-10" style="color: #4a90e2;">Update Inventory</h3>
+                    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                        <select id="update-inv-bg" style="flex: 1; padding: 10px; background: rgba(0,0,0,0.2); color: white; border: 1px solid var(--dark-border); border-radius: 5px;">
+                            <option value="A+">A+</option>
+                            <option value="A-">A-</option>
+                            <option value="B+">B+</option>
+                            <option value="B-">B-</option>
+                            <option value="O+">O+</option>
+                            <option value="O-">O-</option>
+                            <option value="AB+">AB+</option>
+                            <option value="AB-">AB-</option>
+                        </select>
+                        <input type="number" id="update-inv-units" value="1" min="1" style="width: 80px; padding: 10px; background: rgba(0,0,0,0.2); color: white; border: 1px solid var(--dark-border); border-radius: 5px;">
+                    </div>
+                    <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                        <button id="add-inv-btn" class="btn primary-btn" style="flex: 1; margin: 0; background-color: #4a90e2; box-shadow: 0 4px 15px rgba(74,144,226,0.4);" onclick="updateInventory('add')">Update / Add</button>
+                        <button id="remove-inv-btn" class="btn secondary-btn" style="flex: 1; margin: 0;" onclick="updateInventory('remove')">Remove</button>
+                    </div>
                     
                     <h3 style="margin-bottom: 10px; color: white; margin-top: 20px;">Your Active Declarations</h3>
                     <div id="bank-inventory-list" style="max-height: 150px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px;"></div>

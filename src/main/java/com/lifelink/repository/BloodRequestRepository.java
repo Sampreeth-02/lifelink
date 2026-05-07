@@ -6,4 +6,5 @@ import java.util.List;
 
 public interface BloodRequestRepository extends JpaRepository<BloodRequest, Long> {
     List<BloodRequest> findByTypeOrderByCreatedAtDesc(String type);
+    List<BloodRequest> findByBankNameAndBloodGroupAndType(String bankName, String bloodGroup, String type);
 }
