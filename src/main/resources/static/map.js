@@ -16,28 +16,31 @@ const authRole = document.getElementById('auth-role');
 const authAction = document.getElementById('auth-action');
 const authSubmitBtn = document.getElementById('auth-submit-btn');
 
-// --- Navigation & Auth UI ---
+const landingView = document.getElementById('landing-view');
 
-function showLogin(role) {
-    authTitle.innerText = `Login as ${role.replace('_', ' ')}`;
+function showAuthPage(role) {
+    authTitle.innerText = `${role === 'DONOR' ? 'User' : 'Blood Bank'} Portal`;
     authRole.value = role;
-    authAction.value = 'login';
-    authSubmitBtn.innerText = 'Login';
-    document.getElementById('auth-error').innerText = '';
-    authModal.classList.remove('hidden');
+    setAuthAction('login');
+    showView('auth');
 }
 
-function showRegister(role) {
-    authTitle.innerText = `Register as ${role.replace('_', ' ')}`;
-    authRole.value = role;
-    authAction.value = 'register';
-    authSubmitBtn.innerText = 'Register';
+function setAuthAction(action) {
+    authAction.value = action;
+    if (action === 'login') {
+        document.getElementById('tab-login').classList.remove('secondary-btn');
+        document.getElementById('tab-login').classList.add('primary-btn');
+        document.getElementById('tab-register').classList.remove('primary-btn');
+        document.getElementById('tab-register').classList.add('secondary-btn');
+        authSubmitBtn.innerText = 'Login';
+    } else {
+        document.getElementById('tab-register').classList.remove('secondary-btn');
+        document.getElementById('tab-register').classList.add('primary-btn');
+        document.getElementById('tab-login').classList.remove('primary-btn');
+        document.getElementById('tab-login').classList.add('secondary-btn');
+        authSubmitBtn.innerText = 'Register';
+    }
     document.getElementById('auth-error').innerText = '';
-    authModal.classList.remove('hidden');
-}
-
-function closeAuthModal() {
-    authModal.classList.add('hidden');
 }
 
 async function handleAuth(e) {
@@ -58,7 +61,6 @@ async function handleAuth(e) {
         if (res.ok) {
             currentUser = await res.json();
             currentRole = role;
-            closeAuthModal();
             
             if (action === 'register' && role === 'DONOR') {
                 showView('profile');
@@ -138,6 +140,7 @@ function initDashboard() {
         document.getElementById('sidebar-desc').innerText = 'Manage your urgent blood requests here.';
         
         document.getElementById('user-map-container').classList.add('hidden');
+        document.getElementById('map-placeholder').classList.add('hidden');
         document.getElementById('bank-panel').classList.remove('hidden');
         
         loadBankInventory();
@@ -147,7 +150,8 @@ function initDashboard() {
         document.getElementById('nearby-label').innerText = 'Search Blood';
         document.getElementById('sidebar-desc').innerText = 'Search for available blood and urgent requests.';
         
-        document.getElementById('user-map-container').classList.remove('hidden');
+        document.getElementById('user-map-container').classList.add('hidden');
+        document.getElementById('map-placeholder').classList.remove('hidden');
         document.getElementById('bank-panel').classList.add('hidden');
         
         if (!map) {
@@ -279,6 +283,15 @@ let currentFilter = 'ALL';
 
 function filterMap() {
     currentFilter = document.getElementById('search-blood-group').value;
+    
+    // Show map and hide placeholder
+    document.getElementById('map-placeholder').classList.add('hidden');
+    document.getElementById('user-map-container').classList.remove('hidden');
+    
+    if (map) {
+        setTimeout(() => map.invalidateSize(), 100);
+    }
+    
     loadMapData();
 }
 
@@ -440,19 +453,26 @@ function logout() {
     currentRole = null;
     document.getElementById('username').value = '';
     document.getElementById('password').value = '';
-    showView('auth');
+    showView('landing');
 }
 
 function showView(viewName) {
+    if (landingView) landingView.classList.add('hidden');
     authView.classList.add('hidden');
     profileView.classList.add('hidden');
     dashboardView.classList.add('hidden');
     
+    if (landingView) landingView.classList.remove('active');
     authView.classList.remove('active');
     profileView.classList.remove('active');
     dashboardView.classList.remove('active');
 
-    if (viewName === 'auth') {
+    if (viewName === 'landing') {
+        if (landingView) {
+            landingView.classList.remove('hidden');
+            landingView.classList.add('active');
+        }
+    } else if (viewName === 'auth') {
         authView.classList.remove('hidden');
         authView.classList.add('active');
     } else if (viewName === 'profile') {
