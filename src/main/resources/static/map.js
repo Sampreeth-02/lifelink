@@ -134,25 +134,24 @@ function initDashboard() {
     document.getElementById('user-role-badge').innerText = currentRole === 'DONOR' ? 'User' : 'Blood Bank';
 
     if (currentRole === 'BLOOD_BANK') {
+        document.querySelector('.dashboard-content').classList.remove('centered-user-dashboard');
         document.getElementById('bank-actions').classList.remove('hidden');
         document.getElementById('active-requests-section').classList.add('hidden');
         document.getElementById('nearby-label').innerText = 'Bank Dashboard';
         document.getElementById('sidebar-desc').innerText = 'Manage your urgent blood requests here.';
         
-        document.getElementById('user-map-container').classList.add('hidden');
-        document.getElementById('map-placeholder').classList.add('hidden');
         document.getElementById('bank-panel').classList.remove('hidden');
         
         loadBankInventory();
     } else {
+        document.querySelector('.dashboard-content').classList.add('centered-user-dashboard');
         document.getElementById('bank-actions').classList.add('hidden');
         document.getElementById('active-requests-section').classList.remove('hidden');
         document.getElementById('bank-details-panel').classList.add('hidden');
+        document.getElementById('available-section').classList.add('hidden');
         document.getElementById('nearby-label').innerText = 'Search Blood';
         document.getElementById('sidebar-desc').innerText = 'Search for available blood and urgent requests.';
         
-        document.getElementById('user-map-container').classList.add('hidden');
-        document.getElementById('map-placeholder').classList.remove('hidden');
         document.getElementById('bank-panel').classList.add('hidden');
         
         if (!map) {
@@ -208,19 +207,6 @@ async function loadMapData() {
         if (reqDiv) reqDiv.innerHTML = '';
         if (availDiv) availDiv.innerHTML = '';
 
-        let hospitalRedIcon = null;
-        let hospitalBlueIcon = null;
-        if (map) {
-            hospitalRedIcon = L.divIcon({
-                html: '<div style="font-size: 24px; color: white; background: #ff4b4b; border-radius: 5px; padding: 2px; text-align:center; border:1px solid white;">🏥</div>',
-                className: '', iconSize: [30, 30], iconAnchor: [15, 15]
-            });
-            hospitalBlueIcon = L.divIcon({
-                html: '<div style="font-size: 24px; color: white; background: #4a90e2; border-radius: 5px; padding: 2px; text-align:center; border:1px solid white;">🏥</div>',
-                className: '', iconSize: [30, 30], iconAnchor: [15, 15]
-            });
-        }
-
         requests.forEach(req => {
             if (reqDiv) {
                 const escapedBankName = req.bankName.replace(/'/g, "\\'");
@@ -232,35 +218,14 @@ async function loadMapData() {
                     </div>
                 `;
             }
-            if (map && req.latitude && req.longitude) {
-                const marker = L.marker([req.latitude, req.longitude], {icon: hospitalRedIcon}).addTo(map);
-                marker.bindPopup(`
-                    <div style="text-align: center;">
-                        <h3 style="margin-bottom: 5px; color: var(--primary-red);">${req.bankName}</h3>
-                        <p style="margin-bottom: 5px; font-weight: bold; color: var(--primary-red);">NEEDS: ${req.bloodGroup} (${req.units || 1} units)</p>
-                        <button onclick="navigateTo(${req.latitude}, ${req.longitude})" class="btn primary-btn full-width" style="padding: 5px 10px; font-size: 0.8rem;">Navigate</button>
-                    </div>
-                `);
-                markers.push(marker);
-            }
         });
 
         available.forEach(avail => {
             if (availDiv) {
                 availDiv.innerHTML += `
-                    <div onclick="focusMapOn(${avail.latitude || 0}, ${avail.longitude || 0})" style="background: rgba(74,144,226,0.2); border: 1px solid #4a90e2; padding: 10px; border-radius: 5px; cursor: pointer; transition: 0.2s; position: relative;" onmouseover="this.style.background='rgba(74,144,226,0.4)'" onmouseout="this.style.background='rgba(74,144,226,0.2)'">
+                    <div style="background: rgba(74,144,226,0.2); border: 1px solid #4a90e2; padding: 10px; border-radius: 5px; position: relative;">
                         <strong style="color:#4a90e2;">${avail.bloodGroup} Available (${avail.units || 1} units)</strong><br>
                         <small>at ${avail.bankName}</small>
-                        <button onclick="event.stopPropagation(); navigateTo(${avail.latitude || 0}, ${avail.longitude || 0})" class="btn secondary-btn" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); padding: 5px 10px; font-size: 0.8rem; margin: 0;">Navigate</button>
-                    </div>
-                `;
-            }
-            if (map && avail.latitude && avail.longitude) {
-                const marker = L.marker([avail.latitude, avail.longitude], {icon: hospitalBlueIcon}).addTo(map);
-                marker.bindPopup(`
-                    <div style="text-align: center;">
-                        <h3 style="margin-bottom: 5px; color: #4a90e2;">${avail.bankName}</h3>
-                        <p style="margin-bottom: 5px; font-weight: bold; color: #4a90e2;">HAS: ${avail.bloodGroup} (${avail.units || 1} units)</p>
                         <button onclick="navigateTo(${avail.latitude}, ${avail.longitude})" class="btn primary-btn full-width" style="padding: 5px 10px; font-size: 0.8rem; background: #4a90e2; border-color: #4a90e2;">Navigate</button>
                     </div>
                 `);
@@ -300,12 +265,10 @@ let currentFilter = 'ALL';
 function filterMap() {
     currentFilter = document.getElementById('search-blood-group').value;
     
-    // Show map and hide placeholder
-    document.getElementById('map-placeholder').classList.add('hidden');
-    document.getElementById('user-map-container').classList.remove('hidden');
-    
-    if (map) {
-        setTimeout(() => map.invalidateSize(), 100);
+    if (currentFilter !== 'ALL') {
+        document.getElementById('available-section').classList.remove('hidden');
+    } else {
+        document.getElementById('available-section').classList.add('hidden');
     }
     
     loadMapData();
@@ -323,22 +286,7 @@ function showBankDetails(bankName, bloodGroup, units, lat, lng) {
 }
 
 function focusMapOn(lat, lng) {
-    if (currentRole !== 'DONOR') return; // Only users have the map
-    
-    // Hide placeholder and show map container if not already visible
-    document.getElementById('map-placeholder').classList.add('hidden');
-    document.getElementById('user-map-container').classList.remove('hidden');
-    
-    if (map) {
-        setTimeout(() => {
-            map.invalidateSize();
-            if (lat !== 0 && lng !== 0) {
-                map.setView([lat, lng], 15);
-            } else {
-                alert("Location not provided for this bank.");
-            }
-        }, 100);
-    }
+    // Map is removed for users, so focusMapOn now does nothing.
 }
 
 function navigateTo(destLat, destLng) {
