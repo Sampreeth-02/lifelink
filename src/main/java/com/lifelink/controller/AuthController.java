@@ -27,7 +27,18 @@ public class AuthController {
         if (userOpt.isPresent()) {
             User user = userOpt.get();
             if (user.getPassword().equals(request.getPassword()) && user.getRole() == request.getRole()) {
-                return ResponseEntity.ok(user);
+                java.util.Map<String, Object> responseData = new java.util.HashMap<>();
+                responseData.put("id", user.getId());
+                responseData.put("username", user.getUsername());
+                responseData.put("role", user.getRole());
+                if (user.getProfile() != null) {
+                    java.util.Map<String, Object> profileMap = new java.util.HashMap<>();
+                    profileMap.put("bloodGroup", user.getProfile().getBloodGroup());
+                    profileMap.put("latitude", user.getProfile().getLatitude());
+                    profileMap.put("longitude", user.getProfile().getLongitude());
+                    responseData.put("profile", profileMap);
+                }
+                return ResponseEntity.ok(responseData);
             }
         }
         return ResponseEntity.status(401).body("Invalid credentials or role");
@@ -45,7 +56,13 @@ public class AuthController {
         user.setRole(request.getRole());
         
         userRepository.save(user);
-        return ResponseEntity.ok(user);
+        
+        java.util.Map<String, Object> responseData = new java.util.HashMap<>();
+        responseData.put("id", user.getId());
+        responseData.put("username", user.getUsername());
+        responseData.put("role", user.getRole());
+        
+        return ResponseEntity.ok(responseData);
     }
 
     @PostMapping("/{userId}/profile")
