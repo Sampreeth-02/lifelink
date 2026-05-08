@@ -147,7 +147,7 @@ function initDashboard() {
     } else {
         document.getElementById('bank-actions').classList.add('hidden');
         document.getElementById('active-requests-section').classList.remove('hidden');
-        document.getElementById('available-section').classList.add('hidden');
+        document.getElementById('bank-details-panel').classList.add('hidden');
         document.getElementById('nearby-label').innerText = 'Search Blood';
         document.getElementById('sidebar-desc').innerText = 'Search for available blood and urgent requests.';
         
@@ -223,11 +223,12 @@ async function loadMapData() {
 
         requests.forEach(req => {
             if (reqDiv) {
+                const escapedBankName = req.bankName.replace(/'/g, "\\'");
+                const escapedBg = req.bloodGroup.replace(/'/g, "\\'");
                 reqDiv.innerHTML += `
-                    <div onclick="focusMapOn(${req.latitude || 0}, ${req.longitude || 0})" style="background: rgba(255,75,75,0.2); border: 1px solid var(--primary-red); padding: 10px; border-radius: 5px; cursor: pointer; transition: 0.2s; position: relative;" onmouseover="this.style.background='rgba(255,75,75,0.4)'" onmouseout="this.style.background='rgba(255,75,75,0.2)'">
+                    <div onclick="showBankDetails('${escapedBankName}', '${escapedBg}', ${req.units || 1}, ${req.latitude || 0}, ${req.longitude || 0})" style="background: rgba(255,75,75,0.2); border: 1px solid var(--primary-red); padding: 10px; border-radius: 5px; cursor: pointer; transition: 0.2s;" onmouseover="this.style.background='rgba(255,75,75,0.4)'" onmouseout="this.style.background='rgba(255,75,75,0.2)'">
                         <strong style="color:var(--primary-red);">${req.bloodGroup} Needed (${req.units || 1} units)</strong><br>
                         <small>by ${req.bankName}</small>
-                        <button onclick="event.stopPropagation(); navigateTo(${req.latitude || 0}, ${req.longitude || 0})" class="btn primary-btn" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); padding: 5px 10px; font-size: 0.8rem; margin: 0;">Navigate</button>
                     </div>
                 `;
             }
@@ -302,13 +303,23 @@ function filterMap() {
     // Show map and hide placeholder
     document.getElementById('map-placeholder').classList.add('hidden');
     document.getElementById('user-map-container').classList.remove('hidden');
-    document.getElementById('available-section').classList.remove('hidden');
     
     if (map) {
         setTimeout(() => map.invalidateSize(), 100);
     }
     
     loadMapData();
+}
+
+function showBankDetails(bankName, bloodGroup, units, lat, lng) {
+    document.getElementById('detail-bank-name').innerText = bankName;
+    document.getElementById('detail-blood-group').innerText = `Needs: ${bloodGroup} (${units} units)`;
+    document.getElementById('detail-navigate-btn').onclick = function() {
+        navigateTo(lat, lng);
+    };
+    
+    document.getElementById('bank-details-panel').classList.remove('hidden');
+    focusMapOn(lat, lng);
 }
 
 function focusMapOn(lat, lng) {

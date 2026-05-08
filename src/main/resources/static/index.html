@@ -157,11 +157,12 @@
                     </div>
 
                     <h3 style="margin-bottom: 10px; color: var(--primary-red);">Urgent Requests</h3>
-                    <div id="requests-list" style="max-height: 150px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;"></div>
+                    <div id="requests-list" style="max-height: 250px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;"></div>
                     
-                    <div id="available-section" class="hidden">
-                        <h3 style="margin-bottom: 10px; color: #4a90e2;">Available at Banks</h3>
-                        <div id="available-list" style="max-height: 150px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px;"></div>
+                    <div id="bank-details-panel" class="hidden" style="margin-top: 20px; padding: 15px; background: rgba(0,0,0,0.3); border-radius: 8px; border: 1px solid var(--primary-red);">
+                        <h3 id="detail-bank-name" style="color: var(--primary-red); margin-bottom: 5px;">Bank Name</h3>
+                        <p id="detail-blood-group" style="margin-bottom: 10px; color: white;">Needs: </p>
+                        <button id="detail-navigate-btn" class="btn primary-btn full-width" style="margin-top: 10px;">Navigate to Bank</button>
                     </div>
                 </div>
 

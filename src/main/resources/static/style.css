@@ -300,7 +300,7 @@ body {
 }
 
 .sidebar {
-    width: 300px;
+    width: 350px;
     background: var(--dark-surface);
     padding: 2rem;
     border-right: 1px solid var(--dark-border);
