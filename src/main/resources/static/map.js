@@ -152,8 +152,8 @@ function initDashboard() {
         document.getElementById('nearby-label').innerText = 'Search Blood';
         document.getElementById('sidebar-desc').innerText = 'Search for available blood and urgent requests.';
         
-        document.getElementById('user-map-container').classList.add('hidden');
-        document.getElementById('map-placeholder').classList.remove('hidden');
+        document.getElementById('user-map-container').classList.remove('hidden');
+        document.getElementById('map-placeholder').classList.add('hidden');
         document.getElementById('bank-panel').classList.add('hidden');
         
         if (!map) {
@@ -306,9 +306,11 @@ let currentFilter = 'ALL';
 function filterMap() {
     currentFilter = document.getElementById('search-blood-group').value;
     
-    // Show map and hide placeholder
-    document.getElementById('map-placeholder').classList.add('hidden');
-    document.getElementById('user-map-container').classList.remove('hidden');
+    if (currentFilter !== 'ALL') {
+        document.getElementById('available-section').classList.remove('hidden');
+    } else {
+        document.getElementById('available-section').classList.add('hidden');
+    }
     
     if (map) {
         setTimeout(() => map.invalidateSize(), 100);
