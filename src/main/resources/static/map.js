@@ -144,7 +144,7 @@ function initDashboard() {
         
         loadBankInventory();
     } else {
-        document.querySelector('.dashboard-content').classList.add('centered-user-dashboard');
+        document.querySelector('.dashboard-content').classList.remove('centered-user-dashboard');
         document.getElementById('bank-actions').classList.add('hidden');
         document.getElementById('active-requests-section').classList.remove('hidden');
         document.getElementById('bank-details-panel').classList.add('hidden');
@@ -152,6 +152,8 @@ function initDashboard() {
         document.getElementById('nearby-label').innerText = 'Search Blood';
         document.getElementById('sidebar-desc').innerText = 'Search for available blood and urgent requests.';
         
+        document.getElementById('user-map-container').classList.add('hidden');
+        document.getElementById('map-placeholder').classList.remove('hidden');
         document.getElementById('bank-panel').classList.add('hidden');
         
         if (!map) {
@@ -233,6 +235,45 @@ async function loadMapData() {
             }
         });
 
+        // Clear existing markers
+        if (map) {
+            map.eachLayer((layer) => {
+                if (layer instanceof L.Marker) {
+                    map.removeLayer(layer);
+                }
+            });
+        }
+
+        // Add markers for Requests
+        requests.forEach(req => {
+            if (map && req.latitude && req.longitude) {
+                const marker = L.marker([req.latitude, req.longitude], {icon: hospitalRedIcon}).addTo(map);
+                marker.bindPopup(`
+                    <div style="text-align: center;">
+                        <h3 style="margin-bottom: 5px; color: var(--primary-red);">${req.bankName}</h3>
+                        <p style="margin-bottom: 5px; font-weight: bold; color: var(--primary-red);">NEEDS: ${req.bloodGroup} (${req.units || 1} units)</p>
+                        <button onclick="navigateTo(${req.latitude}, ${req.longitude})" class="btn primary-btn full-width" style="padding: 5px 10px; font-size: 0.8rem;">Navigate</button>
+                    </div>
+                `);
+                markers.push(marker);
+            }
+        });
+
+        // Add markers for Available
+        available.forEach(avail => {
+            if (map && avail.latitude && avail.longitude) {
+                const marker = L.marker([avail.latitude, avail.longitude], {icon: hospitalBlueIcon}).addTo(map);
+                marker.bindPopup(`
+                    <div style="text-align: center;">
+                        <h3 style="margin-bottom: 5px; color: #4a90e2;">${avail.bankName}</h3>
+                        <p style="margin-bottom: 5px; font-weight: bold; color: #4a90e2;">HAS: ${avail.bloodGroup} (${avail.units || 1} units)</p>
+                        <button onclick="navigateTo(${avail.latitude}, ${avail.longitude})" class="btn primary-btn full-width" style="padding: 5px 10px; font-size: 0.8rem; background: #4a90e2; border-color: #4a90e2;">Navigate</button>
+                    </div>
+                `);
+                markers.push(marker);
+            }
+        });
+
         // Populate Table for Bank View
         const tableBody = document.getElementById('inventory-table-body');
         if (tableBody) {
@@ -265,6 +306,14 @@ let currentFilter = 'ALL';
 function filterMap() {
     currentFilter = document.getElementById('search-blood-group').value;
     
+    // Show map and hide placeholder
+    document.getElementById('map-placeholder').classList.add('hidden');
+    document.getElementById('user-map-container').classList.remove('hidden');
+    
+    if (map) {
+        setTimeout(() => map.invalidateSize(), 100);
+    }
+    
     if (currentFilter !== 'ALL') {
         document.getElementById('available-section').classList.remove('hidden');
     } else {
@@ -286,7 +335,22 @@ function showBankDetails(bankName, bloodGroup, units, lat, lng) {
 }
 
 function focusMapOn(lat, lng) {
-    // Map is removed for users, so focusMapOn now does nothing.
+    if (currentRole !== 'DONOR') return; // Only users have the map
+    
+    // Hide placeholder and show map container if not already visible
+    document.getElementById('map-placeholder').classList.add('hidden');
+    document.getElementById('user-map-container').classList.remove('hidden');
+    
+    if (map) {
+        setTimeout(() => {
+            map.invalidateSize();
+            if (lat !== 0 && lng !== 0) {
+                map.setView([lat, lng], 15);
+            } else {
+                alert("Location not provided for this bank.");
+            }
+        }, 100);
+    }
 }
 
 function navigateTo(destLat, destLng) {
