@@ -1,0 +1,6 @@
+services:
+  - type: web
+    name: lifelink
+    env: docker
+    plan: free
+    branch: main
